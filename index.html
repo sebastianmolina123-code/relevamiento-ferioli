@@ -1195,7 +1195,7 @@ async function generatePDF() {
 
 // ─── SYNC TO GOOGLE SHEETS ───────────────────────────────
 async function syncToSheets() {
-  const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbyfnderXjKouCn4-iFQSW2lxr156QpxbrUTFkNOLBeVHp2ZqLcp-x03yil8oykFmTY0/exec';
+  const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbyGROzvjIOexj-dYfNg-LC0LAGB3UKCrPWnjtjF3hWY8o2Gk_d9l1XJ_S2e2OnrBzCN/exec';
 
   const fechaFmt = val('fecha')
     ? new Date(val('fecha') + 'T12:00:00').toLocaleDateString('es-AR', {day:'2-digit', month:'long', year:'numeric'})
