@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>FERIOLI ECO — Relevamiento</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --brand:    #003366;
+    --accent:   #E8A020;
+    --bg:       #F5F7FA;
+    --surface:  #FFFFFF;
+    --border:   #D0D7E3;
+    --text:     #1A2533;
+    --muted:    #6B7A90;
+    --danger:   #C0392B;
+    --radius:   10px;
+    --shadow:   0 2px 10px rgba(0,51,102,0.10);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding-bottom: 40px;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--brand);
+    padding: 18px 20px 14px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  }
+  header .logo-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  header .logo-icon {
+    width: 38px;
+    height: 38px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: 900;
+    color: var(--brand);
+    letter-spacing: -1px;
+    flex-shrink: 0;
+  }
+  header h1 {
+    color: #fff;
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+  header p {
+    color: rgba(255,255,255,0.65);
+    font-size: 12px;
+    margin-top: 1px;
+  }
+
+  /* STEPS */
+  .steps-bar {
+    background: var(--brand);
+    padding: 0 20px 16px;
+    display: flex;
+    gap: 6px;
+  }
+  .step-dot {
+    flex: 1;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255,255,255,0.25);
+    transition: background 0.3s;
+  }
+  .step-dot.active { background: var(--accent); }
+  .step-dot.done   { background: rgba(255,255,255,0.6); }
+
+  .step-label {
+    text-align: center;
+    font-size: 11px;
+    color: var(--muted);
+    padding: 10px 20px 0;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* SECTIONS */
+  section.step {
+    display: none;
+    padding: 16px 16px 0;
+    animation: fadeIn 0.22s ease;
+  }
+  section.step.visible { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* CARD */
+  .card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 18px 16px;
+    margin-bottom: 14px;
+  }
+  .card-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--brand);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .card-title span.icon {
+    font-size: 16px;
+  }
+
+  /* FIELDS */
+  .field { margin-bottom: 14px; }
+  .field:last-child { margin-bottom: 0; }
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  label .req { color: var(--danger); }
+
+  input[type="text"],
+  input[type="date"],
+  input[type="tel"],
+  select,
+  textarea {
+    width: 100%;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 11px 13px;
+    font-size: 15px;
+    color: var(--text);
+    background: #fff;
+    outline: none;
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--brand);
+  }
+  textarea {
+    resize: none;
+    line-height: 1.5;
+  }
+
+  /* SELECT WRAPPER */
+  .select-wrap {
+    position: relative;
+  }
+  .select-wrap::after {
+    content: '▾';
+    position: absolute;
+    right: 13px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  /* CHIP SELECTOR */
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+  }
+  .chip {
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    padding: 7px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.18s;
+    background: #fff;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .chip.selected {
+    background: var(--brand);
+    border-color: var(--brand);
+    color: #fff;
+    font-weight: 600;
+  }
+
+  /* PHOTO UPLOAD */
+  .photo-upload-area {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 22px 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    background: #FAFBFD;
+    position: relative;
+  }
+  .photo-upload-area:active,
+  .photo-upload-area.dragover {
+    border-color: var(--accent);
+    background: #FFF8EC;
+  }
+  .photo-upload-area input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+  .upload-icon { font-size: 32px; margin-bottom: 6px; }
+  .upload-text { font-size: 14px; color: var(--muted); font-weight: 500; }
+  .upload-sub  { font-size: 11px; color: #9BA8BB; margin-top: 3px; }
+
+  /* PHOTO GRID */
+  .photo-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 14px;
+  }
+  .photo-thumb {
+    aspect-ratio: 1;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    background: #EEF1F5;
+  }
+  .photo-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .photo-thumb .caption-input {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: rgba(0,0,0,0.55);
+    border: none;
+    border-radius: 0;
+    padding: 5px 7px;
+    font-size: 10px;
+    color: #fff;
+    width: 100%;
+    outline: none;
+  }
+  .photo-thumb .remove-btn {
+    position: absolute;
+    top: 4px; right: 4px;
+    background: rgba(192,57,43,0.85);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+  .photo-count-badge {
+    display: inline-block;
+    background: var(--brand);
+    color: #fff;
+    border-radius: 10px;
+    padding: 2px 9px;
+    font-size: 11px;
+    font-weight: 700;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+
+  /* URGENCIA */
+  .urgencia-row {
+    display: grid;
+    grid-template-columns: repeat(3,1fr);
+    gap: 8px;
+  }
+  .urg-btn {
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 6px;
+    text-align: center;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.18s;
+    background: #fff;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .urg-btn .urg-icon { font-size: 20px; display: block; margin-bottom: 4px; }
+  .urg-btn.baja.selected   { background: #E8F5E9; border-color: #2E7D32; color: #2E7D32; }
+  .urg-btn.media.selected  { background: #FFF8E1; border-color: #F57F17; color: #F57F17; }
+  .urg-btn.alta.selected   { background: #FFEBEE; border-color: #C62828; color: #C62828; }
+
+  /* PREVIEW SUMMARY */
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--bg);
+    gap: 12px;
+  }
+  .summary-row:last-child { border-bottom: none; }
+  .summary-label { font-size: 12px; color: var(--muted); font-weight: 600; flex-shrink: 0; }
+  .summary-val   { font-size: 13px; font-weight: 600; text-align: right; }
+
+  /* BUTTONS */
+  .btn-row {
+    display: flex;
+    gap: 10px;
+    padding: 16px;
+    position: sticky;
+    bottom: 0;
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+    z-index: 50;
+  }
+  .btn {
+    flex: 1;
+    padding: 15px;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.18s, transform 0.1s;
+    -webkit-tap-highlight-color: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary {
+    background: var(--brand);
+    color: #fff;
+  }
+  .btn-secondary {
+    background: #E4E9F0;
+    color: var(--text);
+  }
+  .btn-accent {
+    background: var(--accent);
+    color: var(--brand);
+  }
+  .btn-success {
+    background: #2E7D32;
+    color: #fff;
+  }
+  .btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #1A2533;
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    opacity: 0;
+    transition: all 0.3s;
+    pointer-events: none;
+    z-index: 999;
+    white-space: nowrap;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* CONFIRMATION SCREEN */
+  .confirm-screen {
+    text-align: center;
+    padding: 40px 20px;
+  }
+  .confirm-icon { font-size: 64px; margin-bottom: 16px; }
+  .confirm-title { font-size: 22px; font-weight: 800; color: var(--brand); margin-bottom: 8px; }
+  .confirm-sub   { font-size: 14px; color: var(--muted); line-height: 1.6; }
+
+  /* MISC */
+  .error-msg {
+    color: var(--danger);
+    font-size: 11px;
+    margin-top: 4px;
+    display: none;
+  }
+  .error-msg.visible { display: block; }
+
+  .section-divider {
+    height: 1px;
+    background: var(--bg);
+    margin: 14px 0;
+  }
+
+  .info-banner {
+    background: #EBF3FF;
+    border-left: 3px solid var(--brand);
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 12px;
+    color: var(--brand);
+    margin-bottom: 14px;
+    line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-row">
+    <div class="logo-icon">FE</div>
+    <div>
+      <h1>FERIOLI ECO</h1>
+      <p>Relevamiento Técnico</p>
+    </div>
+  </div>
+</header>
+
+<div class="steps-bar" id="stepsBar">
+  <div class="step-dot active" id="dot0"></div>
+  <div class="step-dot" id="dot1"></div>
+  <div class="step-dot" id="dot2"></div>
+  <div class="step-dot" id="dot3"></div>
+</div>
+
+<div class="step-label" id="stepLabel">Paso 1 de 4 — Datos del Relevamiento</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- PASO 1 — DATOS DEL RELEVAMIENTO        -->
+<!-- ═══════════════════════════════════════ -->
+<section class="step visible" id="step0">
+
+  <div class="card">
+    <div class="card-title"><span class="icon">👤</span> Empleado</div>
+    <div class="field">
+      <label>Tu nombre <span class="req">*</span></label>
+      <input type="text" id="empleado" placeholder="Nombre completo" autocomplete="name">
+      <div class="error-msg" id="err-empleado">Ingresá tu nombre</div>
+    </div>
+    <div class="field">
+      <label>Fecha del relevamiento</label>
+      <input type="date" id="fecha">
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="icon">🏢</span> Cliente</div>
+    <div class="field">
+      <label>Empresa / Cliente <span class="req">*</span></label>
+      <input type="text" id="cliente" placeholder="Razón social o nombre" autocomplete="organization">
+      <div class="error-msg" id="err-cliente">Ingresá el nombre del cliente</div>
+    </div>
+    <div class="field">
+      <label>Contacto</label>
+      <input type="text" id="contacto" placeholder="Nombre del contacto (opcional)">
+    </div>
+    <div class="field">
+      <label>Teléfono</label>
+      <input type="tel" id="telefono" placeholder="+54 ...">
+    </div>
+    <div class="field">
+      <label>Ubicación / Ciudad</label>
+      <input type="text" id="ubicacion" placeholder="Ciudad, provincia">
+    </div>
+  </div>
+
+</section>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- PASO 2 — DIAGNÓSTICO                   -->
+<!-- ═══════════════════════════════════════ -->
+<section class="step" id="step1">
+
+  <div class="card">
+    <div class="card-title"><span class="icon">🔧</span> Equipo / Trabajo</div>
+
+    <div class="field">
+      <label>Tipo de equipo <span class="req">*</span></label>
+      <div class="chips" id="chips-equipo">
+        <div class="chip" data-val="Hidrogrúa">Hidrogrúa</div>
+        <div class="chip" data-val="Hidroelevador">Hidroelevador</div>
+        <div class="chip" data-val="Grúa hidráulica">Grúa hidráulica</div>
+        <div class="chip" data-val="Montaje integral">Montaje integral</div>
+        <div class="chip" data-val="Otro">Otro</div>
+      </div>
+      <div class="error-msg" id="err-equipo">Seleccioná el tipo de equipo</div>
+    </div>
+
+    <div class="field" style="margin-top:14px;">
+      <label>Modelo / Número de serie (si corresponde)</label>
+      <input type="text" id="modelo" placeholder="Ej: CA 53-45, serie 0123">
+    </div>
+
+    <div class="field">
+      <label>Tipo de trabajo <span class="req">*</span></label>
+      <div class="chips" id="chips-trabajo">
+        <div class="chip" data-val="Reparación">Reparación</div>
+        <div class="chip" data-val="Mantenimiento">Mantenimiento</div>
+        <div class="chip" data-val="Montaje nuevo">Montaje nuevo</div>
+        <div class="chip" data-val="Inspección">Inspección</div>
+        <div class="chip" data-val="Presupuesto">Presupuesto</div>
+        <div class="chip" data-val="Garantía">Garantía</div>
+      </div>
+      <div class="error-msg" id="err-trabajo">Seleccioná el tipo de trabajo</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="icon">📋</span> Diagnóstico</div>
+    <div class="field">
+      <label>Descripción del problema / situación <span class="req">*</span></label>
+      <textarea id="diagnostico" rows="5" placeholder="Describí el problema detectado, síntomas, qué falla o qué se solicita..."></textarea>
+      <div class="error-msg" id="err-diagnostico">Completá el diagnóstico</div>
+    </div>
+    <div class="field">
+      <label>Observaciones adicionales</label>
+      <textarea id="observaciones" rows="3" placeholder="Notas extra, condiciones de trabajo, acceso al equipo..."></textarea>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="icon">⚡</span> Urgencia</div>
+    <div class="urgencia-row">
+      <div class="urg-btn baja" data-val="Baja">
+        <span class="urg-icon">🟢</span>Baja
+      </div>
+      <div class="urg-btn media" data-val="Media">
+        <span class="urg-icon">🟡</span>Media
+      </div>
+      <div class="urg-btn alta" data-val="Alta">
+        <span class="urg-icon">🔴</span>Alta
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- PASO 3 — FOTOS                         -->
+<!-- ═══════════════════════════════════════ -->
+<section class="step" id="step2">
+
+  <div class="info-banner">
+    📸 Agregá fotos del equipo y el problema. Podés escribir una descripción breve en cada imagen (aparecerá en el PDF).
+  </div>
+
+  <div class="card">
+    <div class="card-title">
+      <span class="icon">📷</span> Fotografías
+      <span class="photo-count-badge" id="photoCount">0</span>
+    </div>
+
+    <div class="photo-upload-area" id="uploadArea">
+      <input type="file" id="photoInput" accept="image/*" multiple capture="environment">
+      <div class="upload-icon">📷</div>
+      <div class="upload-text">Tocar para agregar fotos</div>
+      <div class="upload-sub">JPG, PNG — múltiples permitidas</div>
+    </div>
+
+    <div class="photo-grid" id="photoGrid"></div>
+  </div>
+
+</section>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- PASO 4 — RESUMEN Y GENERAR PDF         -->
+<!-- ═══════════════════════════════════════ -->
+<section class="step" id="step3">
+
+  <div id="summaryContent">
+    <div class="card">
+      <div class="card-title"><span class="icon">📄</span> Resumen del relevamiento</div>
+
+      <div class="summary-row">
+        <span class="summary-label">Empleado</span>
+        <span class="summary-val" id="prev-empleado">—</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-label">Fecha</span>
+        <span class="summary-val" id="prev-fecha">—</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-label">Cliente</span>
+        <span class="summary-val" id="prev-cliente">—</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-label">Contacto</span>
+        <span class="summary-val" id="prev-contacto">—</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-label">Ubicación</span>
+        <span class="summary-val" id="prev-ubicacion">—</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="icon">🔧</span> Trabajo</div>
+      <div class="summary-row">
+        <span class="summary-label">Equipo</span>
+        <span class="summary-val" id="prev-equipo">—</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-label">Modelo</span>
+        <span class="summary-val" id="prev-modelo">—</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-label">Tipo</span>
+        <span class="summary-val" id="prev-trabajo">—</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-label">Urgencia</span>
+        <span class="summary-val" id="prev-urgencia">—</span>
+      </div>
+      <div class="summary-row" style="flex-direction:column; gap:6px;">
+        <span class="summary-label">Diagnóstico</span>
+        <span class="summary-val" id="prev-diagnostico" style="text-align:left; font-weight:400; font-size:13px; color:var(--text);">—</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="icon">📷</span> Fotos adjuntas <span class="photo-count-badge" id="prev-photoCount">0</span></div>
+      <div class="photo-grid" id="prev-photoGrid"></div>
+    </div>
+  </div>
+
+  <div class="confirm-screen" id="confirmScreen" style="display:none;">
+    <div class="confirm-icon">✅</div>
+    <div class="confirm-title">¡Relevamiento completado!</div>
+    <div class="confirm-sub" id="confirmSubText">Los archivos se generaron correctamente.</div>
+    <div style="margin-top:28px;display:flex;flex-direction:column;gap:12px;max-width:320px;margin-left:auto;margin-right:auto;">
+      <button class="btn btn-success" style="flex:none;padding:16px;font-size:15px;" onclick="redownloadPDF()">📄 Descargar PDF</button>
+      <button class="btn" id="btnWhatsapp" style="flex:none;padding:16px;font-size:15px;background:#25D366;color:#fff;" onclick="openWhatsApp()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="white" style="flex-shrink:0;margin-right:6px"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        Enviar por WhatsApp
+      </button>
+    </div>
+    <div style="margin-top:20px;">
+      <button onclick="location.reload()" style="background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;text-decoration:underline;">+ Nuevo relevamiento</button>
+    </div>
+  </div>
+
+</section>
+
+<!-- NAVIGATION BUTTONS -->
+<div class="btn-row" id="btnRow">
+  <button class="btn btn-secondary" id="btnBack" style="display:none;" onclick="goBack()">← Atrás</button>
+  <button class="btn btn-primary" id="btnNext" onclick="goNext()">Continuar →</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── STATE ───────────────────────────────────────────────
+let currentStep = 0;
+const totalSteps = 4;
+let selectedEquipo  = '';
+let selectedTrabajo = '';
+let selectedUrgencia = 'Media';
+let photos = []; // [{dataUrl, caption}]
+let lastPdfDoc = null;      // jsPDF instance saved after generation
+let lastPdfFilename = '';   // filename saved after generation
+
+// ─── INIT ────────────────────────────────────────────────
+document.getElementById('fecha').value = new Date().toISOString().split('T')[0];
+
+// Chips — equipo
+document.querySelectorAll('#chips-equipo .chip').forEach(c => {
+  c.addEventListener('click', () => {
+    document.querySelectorAll('#chips-equipo .chip').forEach(x => x.classList.remove('selected'));
+    c.classList.add('selected');
+    selectedEquipo = c.dataset.val;
+    document.getElementById('err-equipo').classList.remove('visible');
+  });
+});
+
+// Chips — trabajo
+document.querySelectorAll('#chips-trabajo .chip').forEach(c => {
+  c.addEventListener('click', () => {
+    document.querySelectorAll('#chips-trabajo .chip').forEach(x => x.classList.remove('selected'));
+    c.classList.add('selected');
+    selectedTrabajo = c.dataset.val;
+    document.getElementById('err-trabajo').classList.remove('visible');
+  });
+});
+
+// Urgencia
+selectedUrgencia = 'Media';
+document.querySelector('.urg-btn.media').classList.add('selected');
+document.querySelectorAll('.urg-btn').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.urg-btn').forEach(x => x.classList.remove('selected'));
+    b.classList.add('selected');
+    selectedUrgencia = b.dataset.val;
+  });
+});
+
+// Fotos
+document.getElementById('photoInput').addEventListener('change', handlePhotoInput);
+
+function handlePhotoInput(e) {
+  const files = Array.from(e.target.files);
+  let pending = files.length;
+  if (!pending) return;
+
+  files.forEach(file => {
+    if (!file.type.startsWith('image/')) { pending--; return; }
+    const reader = new FileReader();
+    reader.onload = ev => {
+      photos.push({ dataUrl: ev.target.result, caption: '' });
+      pending--;
+      if (pending === 0) renderPhotoGrid();
+    };
+    reader.readAsDataURL(file);
+  });
+  e.target.value = '';
+}
+
+function renderPhotoGrid() {
+  const grid = document.getElementById('photoGrid');
+  document.getElementById('photoCount').textContent = photos.length;
+  grid.innerHTML = '';
+
+  photos.forEach((p, i) => {
+    const thumb = document.createElement('div');
+    thumb.className = 'photo-thumb';
+    thumb.innerHTML = `
+      <img src="${p.dataUrl}" loading="lazy">
+      <button class="remove-btn" onclick="removePhoto(${i})">×</button>
+      <input class="caption-input" type="text" placeholder="Descripción..." value="${escapeHtml(p.caption)}"
+             oninput="photos[${i}].caption = this.value">
+    `;
+    grid.appendChild(thumb);
+  });
+}
+
+function removePhoto(i) {
+  photos.splice(i, 1);
+  renderPhotoGrid();
+}
+
+function escapeHtml(t) {
+  return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ─── NAVIGATION ──────────────────────────────────────────
+function goNext() {
+  if (!validateStep(currentStep)) return;
+  if (currentStep === totalSteps - 1) {
+    generatePDF();
+    return;
+  }
+  showStep(currentStep + 1);
+}
+
+function goBack() {
+  showStep(currentStep - 1);
+}
+
+function showStep(n) {
+  document.getElementById('step' + currentStep).classList.remove('visible');
+  currentStep = n;
+  document.getElementById('step' + currentStep).classList.add('visible');
+  updateNav();
+  updateDots();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  if (currentStep === 3) buildPreview();
+}
+
+function updateNav() {
+  const btnBack = document.getElementById('btnBack');
+  const btnNext = document.getElementById('btnNext');
+
+  btnBack.style.display = currentStep > 0 ? 'flex' : 'none';
+
+  if (currentStep === totalSteps - 1) {
+    btnNext.textContent = '';
+    btnNext.innerHTML = '📄 Generar PDF';
+    btnNext.className = 'btn btn-success';
+  } else {
+    btnNext.innerHTML = 'Continuar →';
+    btnNext.className = 'btn btn-primary';
+  }
+}
+
+function updateDots() {
+  const labels = ['Datos del Relevamiento','Diagnóstico','Fotografías','Confirmar y Generar'];
+  document.getElementById('stepLabel').textContent = `Paso ${currentStep+1} de ${totalSteps} — ${labels[currentStep]}`;
+  for (let i = 0; i < totalSteps; i++) {
+    const dot = document.getElementById('dot' + i);
+    dot.className = 'step-dot';
+    if (i < currentStep)  dot.classList.add('done');
+    if (i === currentStep) dot.classList.add('active');
+  }
+}
+
+// ─── VALIDATION ──────────────────────────────────────────
+function validateStep(s) {
+  let ok = true;
+
+  if (s === 0) {
+    if (!val('empleado')) { show('err-empleado'); ok = false; } else hide('err-empleado');
+    if (!val('cliente'))  { show('err-cliente');  ok = false; } else hide('err-cliente');
+  }
+  if (s === 1) {
+    if (!selectedEquipo)            { show('err-equipo');     ok = false; } else hide('err-equipo');
+    if (!selectedTrabajo)           { show('err-trabajo');    ok = false; } else hide('err-trabajo');
+    if (!val('diagnostico'))        { show('err-diagnostico');ok = false; } else hide('err-diagnostico');
+  }
+  if (!ok) toast('Completá los campos requeridos ⚠️');
+  return ok;
+}
+
+const val  = id => document.getElementById(id).value.trim();
+const show = id => document.getElementById(id).classList.add('visible');
+const hide = id => document.getElementById(id).classList.remove('visible');
+
+// ─── PREVIEW ─────────────────────────────────────────────
+function buildPreview() {
+  const fmt = d => d ? new Date(d + 'T12:00:00').toLocaleDateString('es-AR', { day:'2-digit', month:'long', year:'numeric' }) : '—';
+
+  setText('prev-empleado', val('empleado'));
+  setText('prev-fecha',    fmt(val('fecha')));
+  setText('prev-cliente',  val('cliente'));
+  setText('prev-contacto', val('contacto') || '—');
+  setText('prev-ubicacion',val('ubicacion') || '—');
+  setText('prev-equipo',   selectedEquipo || '—');
+  setText('prev-modelo',   val('modelo') || '—');
+  setText('prev-trabajo',  selectedTrabajo || '—');
+  setText('prev-urgencia', selectedUrgencia);
+  setText('prev-diagnostico', val('diagnostico'));
+
+  document.getElementById('prev-photoCount').textContent = photos.length;
+  const pg = document.getElementById('prev-photoGrid');
+  pg.innerHTML = '';
+  photos.forEach(p => {
+    const t = document.createElement('div');
+    t.className = 'photo-thumb';
+    t.innerHTML = `<img src="${p.dataUrl}" loading="lazy">`;
+    pg.appendChild(t);
+  });
+}
+
+function setText(id, txt) {
+  document.getElementById(id).textContent = txt;
+}
+
+// ─── TOAST ───────────────────────────────────────────────
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ─── PDF GENERATION ──────────────────────────────────────
+async function generatePDF() {
+  const { jsPDF } = window.jspdf;
+
+  // Colors
+  const BRAND   = [0, 51, 102];
+  const ACCENT  = [232, 160, 32];
+  const LIGHT   = [245, 247, 250];
+  const TEXT    = [26, 37, 51];
+  const MUTED   = [107, 122, 144];
+  const WHITE   = [255, 255, 255];
+  const BORDER  = [208, 215, 227];
+
+  const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+  const W = doc.internal.pageSize.getWidth();
+  const H = doc.internal.pageSize.getWidth() > 0 ? 297 : 297;
+  let y = 0;
+
+  const fmt = d => d ? new Date(d + 'T12:00:00').toLocaleDateString('es-AR', { day:'2-digit', month:'long', year:'numeric' }) : '—';
+
+  // ── HEADER ──
+  doc.setFillColor(...BRAND);
+  doc.rect(0, 0, W, 36, 'F');
+
+  // Logo box
+  doc.setFillColor(...ACCENT);
+  doc.roundedRect(10, 8, 20, 20, 3, 3, 'F');
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(11);
+  doc.setTextColor(...BRAND);
+  doc.text('FE', 20, 21, { align:'center' });
+
+  doc.setTextColor(...WHITE);
+  doc.setFontSize(16);
+  doc.setFont('helvetica','bold');
+  doc.text('FERIOLI ECO S.R.L.', 35, 17);
+  doc.setFontSize(9);
+  doc.setFont('helvetica','normal');
+  doc.setTextColor(200, 215, 235);
+  doc.text('Relevamiento Técnico — Informe para presupuesto', 35, 24);
+  doc.text('www.feriolisa.com.ar', 35, 30);
+
+  // Accent bar
+  doc.setFillColor(...ACCENT);
+  doc.rect(0, 36, W, 2.5, 'F');
+
+  y = 46;
+
+  // ── INFO BOXES (2 cols) ──
+  const boxH = 38;
+  const col1X = 10, col2X = 107;
+  const colW  = 93;
+
+  // Box 1 — Datos del relevamiento
+  doc.setFillColor(...LIGHT);
+  doc.roundedRect(col1X, y, colW, boxH, 3, 3, 'F');
+  doc.setDrawColor(...BORDER);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(col1X, y, colW, boxH, 3, 3, 'S');
+
+  // Box header
+  doc.setFillColor(...BRAND);
+  doc.roundedRect(col1X, y, colW, 9, 3, 3, 'F');
+  doc.rect(col1X, y+6, colW, 3, 'F');
+
+  doc.setFontSize(8);
+  doc.setFont('helvetica','bold');
+  doc.setTextColor(...WHITE);
+  doc.text('DATOS DEL RELEVAMIENTO', col1X+4, y+6);
+
+  const row1 = (label, value, rowY) => {
+    doc.setFontSize(7.5);
+    doc.setFont('helvetica','bold');
+    doc.setTextColor(...MUTED);
+    doc.text(label + ':', col1X+4, rowY);
+    doc.setFont('helvetica','normal');
+    doc.setTextColor(...TEXT);
+    const maxW = colW - 8;
+    const wrapped = doc.splitTextToSize(value || '—', maxW - 28);
+    doc.text(wrapped[0] || '—', col1X+32, rowY);
+  };
+
+  row1('Empleado', val('empleado'), y+15);
+  row1('Fecha',    fmt(val('fecha')), y+22);
+  row1('Urgencia', selectedUrgencia, y+29);
+
+  const urg = selectedUrgencia === 'Alta' ? [198,40,40] : selectedUrgencia === 'Media' ? [245,127,23] : [46,125,50];
+  doc.setFillColor(...urg);
+  doc.roundedRect(col1X+52, y+25, 20, 6, 2, 2, 'F');
+  doc.setFontSize(7);
+  doc.setFont('helvetica','bold');
+  doc.setTextColor(...WHITE);
+  doc.text(selectedUrgencia.toUpperCase(), col1X+62, y+29.5, { align:'center' });
+
+  // Box 2 — Cliente
+  doc.setFillColor(...LIGHT);
+  doc.roundedRect(col2X, y, colW, boxH, 3, 3, 'F');
+  doc.setDrawColor(...BORDER);
+  doc.roundedRect(col2X, y, colW, boxH, 3, 3, 'S');
+
+  doc.setFillColor(...BRAND);
+  doc.roundedRect(col2X, y, colW, 9, 3, 3, 'F');
+  doc.rect(col2X, y+6, colW, 3, 'F');
+
+  doc.setFontSize(8);
+  doc.setFont('helvetica','bold');
+  doc.setTextColor(...WHITE);
+  doc.text('DATOS DEL CLIENTE', col2X+4, y+6);
+
+  const row2 = (label, value, rowY) => {
+    doc.setFontSize(7.5);
+    doc.setFont('helvetica','bold');
+    doc.setTextColor(...MUTED);
+    doc.text(label + ':', col2X+4, rowY);
+    doc.setFont('helvetica','normal');
+    doc.setTextColor(...TEXT);
+    doc.text(value || '—', col2X+28, rowY);
+  };
+
+  row2('Empresa',   val('cliente'),   y+15);
+  row2('Contacto',  val('contacto')  || '—', y+22);
+  row2('Teléfono',  val('telefono')  || '—', y+29);
+  row2('Ubicación', val('ubicacion') || '—', y+36);
+
+  y += boxH + 8;
+
+  // ── EQUIPO BOX ──
+  doc.setFillColor(...LIGHT);
+  doc.roundedRect(10, y, W-20, 26, 3, 3, 'F');
+  doc.setDrawColor(...BORDER);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(10, y, W-20, 26, 3, 3, 'S');
+
+  doc.setFillColor(...BRAND);
+  doc.roundedRect(10, y, W-20, 9, 3, 3, 'F');
+  doc.rect(10, y+6, W-20, 3, 'F');
+
+  doc.setFontSize(8);
+  doc.setFont('helvetica','bold');
+  doc.setTextColor(...WHITE);
+  doc.text('EQUIPO Y TIPO DE TRABAJO', 14, y+6);
+
+  const colsE = (W-20)/3;
+  const eRow = (label, value, cx, rowY) => {
+    doc.setFontSize(7.5);
+    doc.setFont('helvetica','bold');
+    doc.setTextColor(...MUTED);
+    doc.text(label.toUpperCase(), cx, rowY);
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(9);
+    doc.setTextColor(...TEXT);
+    doc.text(value || '—', cx, rowY+6);
+  };
+
+  eRow('Tipo de equipo', selectedEquipo,  14, y+15);
+  eRow('Tipo de trabajo', selectedTrabajo, 14+colsE, y+15);
+  eRow('Modelo / Serie', val('modelo') || '—', 14+colsE*2, y+15);
+
+  y += 34;
+
+  // ── DIAGNÓSTICO ──
+  const diagText = val('diagnostico');
+  const obsText  = val('observaciones');
+
+  doc.setFillColor(...BRAND);
+  doc.rect(10, y, W-20, 9, 'F');
+  doc.roundedRect(10, y, W-20, 9, 2, 2, 'F');
+
+  doc.setFontSize(8);
+  doc.setFont('helvetica','bold');
+  doc.setTextColor(...WHITE);
+  doc.text('DIAGNÓSTICO TÉCNICO', 14, y+6);
+
+  y += 11;
+
+  doc.setFillColor(255,255,255);
+  doc.setDrawColor(...BORDER);
+  doc.setLineWidth(0.3);
+
+  // Diagnóstico text
+  doc.setFontSize(9);
+  doc.setFont('helvetica','normal');
+  doc.setTextColor(...TEXT);
+  const diagLines = doc.splitTextToSize(diagText, W-28);
+  const diagH = diagLines.length * 5 + 8;
+  doc.rect(10, y, W-20, diagH, 'FD');
+  doc.text(diagLines, 14, y+6);
+  y += diagH + 4;
+
+  if (obsText) {
+    doc.setFontSize(8);
+    doc.setFont('helvetica','bold');
+    doc.setTextColor(...MUTED);
+    doc.text('OBSERVACIONES ADICIONALES', 10, y);
+    y += 4;
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(...TEXT);
+    const obsLines = doc.splitTextToSize(obsText, W-28);
+    const obsH = obsLines.length * 4.5 + 8;
+    doc.setFillColor(255,255,255);
+    doc.rect(10, y, W-20, obsH, 'FD');
+    doc.text(obsLines, 14, y+5);
+    y += obsH + 4;
+  }
+
+  // ── FOTOS ──
+  if (photos.length > 0) {
+    const newPageForPhotos = y > 185;
+    if (newPageForPhotos) { doc.addPage(); y = 16; }
+
+    doc.setFillColor(...BRAND);
+    doc.roundedRect(10, y, W-20, 9, 2, 2, 'F');
+    doc.setFontSize(8);
+    doc.setFont('helvetica','bold');
+    doc.setTextColor(...WHITE);
+    doc.text(`FOTOGRAFÍAS ADJUNTAS (${photos.length})`, 14, y+6);
+    y += 13;
+
+    const cols   = 3;
+    const imgW   = (W - 20 - (cols-1)*4) / cols;
+    const imgH   = imgW * 0.75;
+    const capH   = 7;
+
+    for (let i = 0; i < photos.length; i++) {
+      const col = i % cols;
+      const x   = 10 + col * (imgW + 4);
+
+      if (col === 0 && i !== 0) y += imgH + capH + 6;
+      if (y + imgH + capH > 282) { doc.addPage(); y = 16; }
+
+      try {
+        doc.addImage(photos[i].dataUrl, 'JPEG', x, y, imgW, imgH, undefined, 'FAST');
+      } catch(e) {
+        doc.setFillColor(...LIGHT);
+        doc.rect(x, y, imgW, imgH, 'F');
+        doc.setFontSize(7);
+        doc.setTextColor(...MUTED);
+        doc.text('Imagen no disponible', x + imgW/2, y + imgH/2, { align:'center' });
+      }
+
+      // Photo border
+      doc.setDrawColor(...BORDER);
+      doc.setLineWidth(0.3);
+      doc.rect(x, y, imgW, imgH);
+
+      // Caption
+      const cap = photos[i].caption || `Foto ${i+1}`;
+      doc.setFillColor(...LIGHT);
+      doc.rect(x, y+imgH, imgW, capH, 'F');
+      doc.setFontSize(7);
+      doc.setFont('helvetica','normal');
+      doc.setTextColor(...TEXT);
+      const capLine = doc.splitTextToSize(cap, imgW-4);
+      doc.text(capLine[0], x+2, y+imgH+4.5);
+
+      if (col === cols-1 || i === photos.length-1) {
+        if (i === photos.length-1 && col !== cols-1) {
+          // do nothing
+        }
+      }
+    }
+
+    y += imgH + capH + 6;
+  }
+
+  // ── FOOTER ──
+  const totalPages = doc.internal.getNumberOfPages();
+  for (let p = 1; p <= totalPages; p++) {
+    doc.setPage(p);
+    doc.setFillColor(...BRAND);
+    doc.rect(0, 287, W, 10, 'F');
+    doc.setFontSize(7);
+    doc.setFont('helvetica','normal');
+    doc.setTextColor(180, 200, 220);
+    doc.text('FERIOLI ECO S.R.L. — Leones, Córdoba, Argentina — www.feriolisa.com.ar', W/2, 293.5, { align:'center' });
+    doc.setTextColor(255,255,255);
+    doc.text(`Pág. ${p} / ${totalPages}`, W-12, 293.5, { align:'right' });
+  }
+
+  // ── SAVE ──
+  const clienteSlug = val('cliente').replace(/[^a-zA-Z0-9]/g,'_').substring(0,20);
+  const fechaSlug   = val('fecha') || new Date().toISOString().split('T')[0];
+  const filename    = `Relevamiento_FERIOLI_${clienteSlug}_${fechaSlug}.pdf`;
+
+  lastPdfDoc      = doc;
+  lastPdfFilename = filename;
+
+  doc.save(filename);
+
+  // Sync data to Google Sheets silently
+  setTimeout(() => syncToSheets(), 600);
+
+  // Show confirmation
+  document.getElementById('summaryContent').style.display = 'none';
+  document.getElementById('confirmScreen').style.display  = 'block';
+  document.getElementById('btnNext').style.display = 'none';
+  document.getElementById('btnBack').style.display = 'none';
+}
+
+// ─── SYNC TO GOOGLE SHEETS ───────────────────────────────
+async function syncToSheets() {
+  const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbyfnderXjKouCn4-iFQSW2lxr156QpxbrUTFkNOLBeVHp2ZqLcp-x03yil8oykFmTY0/exec';
+
+  const fechaFmt = val('fecha')
+    ? new Date(val('fecha') + 'T12:00:00').toLocaleDateString('es-AR', {day:'2-digit', month:'long', year:'numeric'})
+    : new Date().toLocaleDateString('es-AR', {day:'2-digit', month:'long', year:'numeric'});
+
+  const payload = {
+    fecha:         fechaFmt,
+    empleado:      val('empleado'),
+    cliente:       val('cliente'),
+    contacto:      val('contacto')      || '',
+    telefono:      val('telefono')      || '',
+    ubicacion:     val('ubicacion')     || '',
+    equipo:        selectedEquipo       || '',
+    trabajo:       selectedTrabajo      || '',
+    modelo:        val('modelo')        || '',
+    urgencia:      selectedUrgencia     || '',
+    diagnostico:   val('diagnostico')   || '',
+    observaciones: val('observaciones') || '',
+    cantFotos:     photos.length,
+    captionsFotos: photos.map((p,i) => `Foto ${i+1}: ${p.caption || 'sin descripción'}`).join(' | '),
+  };
+
+  try {
+    await fetch(SHEETS_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    // no-cors means we can't read the response, but the data arrives
+  } catch(e) {
+    console.warn('Sheets sync error:', e);
+  }
+}
+
+// ─── RE-DOWNLOAD PDF ─────────────────────────────────────
+function redownloadPDF() {
+  if (lastPdfDoc) lastPdfDoc.save(lastPdfFilename);
+}
+
+// ─── EXCEL GENERATION ────────────────────────────────────
+function downloadExcel() {
+  const wb = XLSX.utils.book_new();
+
+  // ── Sheet 1: Datos del relevamiento ──
+  const fechaFmt = val('fecha')
+    ? new Date(val('fecha') + 'T12:00:00').toLocaleDateString('es-AR', {day:'2-digit',month:'long',year:'numeric'})
+    : '—';
+
+  const datos = [
+    ['FERIOLI ECO S.R.L. — Relevamiento Técnico', '', '', ''],
+    ['', '', '', ''],
+    ['CAMPO', 'VALOR', '', ''],
+    ['Empleado',          val('empleado')  || '—', '', ''],
+    ['Fecha',             fechaFmt,                '', ''],
+    ['Cliente / Empresa', val('cliente')   || '—', '', ''],
+    ['Contacto',          val('contacto')  || '—', '', ''],
+    ['Teléfono',          val('telefono')  || '—', '', ''],
+    ['Ubicación',         val('ubicacion') || '—', '', ''],
+    ['', '', '', ''],
+    ['EQUIPO Y TRABAJO',  '',              '', ''],
+    ['Tipo de equipo',    selectedEquipo   || '—', '', ''],
+    ['Tipo de trabajo',   selectedTrabajo  || '—', '', ''],
+    ['Modelo / Serie',    val('modelo')    || '—', '', ''],
+    ['Urgencia',          selectedUrgencia || '—', '', ''],
+    ['', '', '', ''],
+    ['DIAGNÓSTICO',       '',              '', ''],
+    ['Descripción',       val('diagnostico') || '—', '', ''],
+    ['Observaciones',     val('observaciones') || '—', '', ''],
+    ['', '', '', ''],
+    ['FOTOS ADJUNTAS',    photos.length + ' foto(s)', '', ''],
+  ];
+
+  // Add photo captions
+  photos.forEach((p, i) => {
+    datos.push([`  Foto ${i+1}`, p.caption || '(sin descripción)', '', '']);
+  });
+
+  datos.push(['', '', '', '']);
+  datos.push(['Generado', new Date().toLocaleString('es-AR'), '', '']);
+
+  const ws = XLSX.utils.aoa_to_sheet(datos);
+
+  // Column widths
+  ws['!cols'] = [{ wch: 22 }, { wch: 60 }, { wch: 10 }, { wch: 10 }];
+
+  // Merge title row
+  ws['!merges'] = [{ s:{r:0,c:0}, e:{r:0,c:3} }];
+
+  XLSX.utils.book_append_sheet(wb, ws, 'Relevamiento');
+
+  // ── Sheet 2: Registro histórico (append-friendly) ──
+  const registro = [
+    ['Fecha', 'Empleado', 'Cliente', 'Contacto', 'Ubicación', 'Equipo', 'Tipo Trabajo', 'Modelo', 'Urgencia', 'Diagnóstico', 'Observaciones', 'Cant. Fotos'],
+    [
+      fechaFmt,
+      val('empleado')      || '',
+      val('cliente')       || '',
+      val('contacto')      || '',
+      val('ubicacion')     || '',
+      selectedEquipo       || '',
+      selectedTrabajo      || '',
+      val('modelo')        || '',
+      selectedUrgencia     || '',
+      val('diagnostico')   || '',
+      val('observaciones') || '',
+      photos.length,
+    ]
+  ];
+
+  const ws2 = XLSX.utils.aoa_to_sheet(registro);
+  ws2['!cols'] = [
+    {wch:14},{wch:18},{wch:22},{wch:18},{wch:18},
+    {wch:14},{wch:16},{wch:16},{wch:10},{wch:50},{wch:40},{wch:10}
+  ];
+  XLSX.utils.book_append_sheet(wb, ws2, 'Registro');
+
+  const clienteSlug = val('cliente').replace(/[^a-zA-Z0-9]/g,'_').substring(0,20);
+  const fechaSlug   = val('fecha') || new Date().toISOString().split('T')[0];
+  XLSX.writeFile(wb, `Relevamiento_FERIOLI_${clienteSlug}_${fechaSlug}.xlsx`);
+
+  toast('✅ Excel descargado');
+}
+
+// ─── WHATSAPP ─────────────────────────────────────────────
+function openWhatsApp() {
+  const cliente   = val('cliente')  || 'cliente';
+  const empleado  = val('empleado') || 'empleado';
+  const fechaFmt  = val('fecha')
+    ? new Date(val('fecha') + 'T12:00:00').toLocaleDateString('es-AR', {day:'2-digit',month:'long',year:'numeric'})
+    : new Date().toLocaleDateString('es-AR', {day:'2-digit',month:'long',year:'numeric'});
+
+  const urgEmoji  = selectedUrgencia === 'Alta' ? '🔴' : selectedUrgencia === 'Media' ? '🟡' : '🟢';
+  const diagCorto = (val('diagnostico') || '').substring(0, 200);
+
+  const msg =
+`🔧 *RELEVAMIENTO TÉCNICO — FERIOLI ECO*
+──────────────────────
+📅 Fecha: ${fechaFmt}
+👤 Empleado: ${empleado}
+──────────────────────
+🏢 *Cliente:* ${cliente}
+📍 Ubicación: ${val('ubicacion') || '—'}
+📞 Teléfono: ${val('telefono') || '—'}
+──────────────────────
+🏗️ *Equipo:* ${selectedEquipo || '—'}
+🔩 *Trabajo:* ${selectedTrabajo || '—'}
+📋 Modelo: ${val('modelo') || '—'}
+${urgEmoji} *Urgencia:* ${selectedUrgencia}
+──────────────────────
+📝 *Diagnóstico:*
+${diagCorto}${val('diagnostico').length > 200 ? '...' : ''}
+──────────────────────
+📷 Fotos adjuntas: ${photos.length}
+📄 PDF e informe completo adjunto.`;
+
+  const encoded = encodeURIComponent(msg);
+  // Open WhatsApp — on mobile opens the app, on desktop opens web
+  window.open(`https://wa.me/5493472437410?text=${encoded}`, '_blank');
+
+  toast('📱 Abriendo WhatsApp...');
+}
+</script>
+
+</body>
+</html>
